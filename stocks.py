@@ -6,7 +6,6 @@
 
 import csv
 import urllib2
-# import StringIO
 
 # Retrieves the stock quote for the given symbol
 # from Yahoo Finance as a float.
@@ -23,11 +22,11 @@ def get_stock_quote(symbol):
 
 # Downloads the stock history for the given symbol,
 # for the given date range, as a csv file.
-# Input:	symbol 	- stock symbol as a string
-#					start  	- start date in the form 'mm/dd/yyyy'
-#					end  		- end date in the form 'mm/dd/yyyy'
-#					outfile - output filename, e.g. 'out.csv'
-#					interval- trading interval; either d, w, m (daily, weekly, monthl7)
+# Input: symbol   - stock symbol as a string
+#        start    - start date in the form 'mm/dd/yyyy'
+#        end      - end date in the form 'mm/dd/yyyy'
+#        outfile  - output filename, e.g. 'out.csv'
+#        interval - trading interval; either d, w, m (daily, weekly, monthl7)
 def csv_quote_history(symbol, start, end, outfile, interval='d'):
 	BASE_URL = 'http://ichart.yahoo.com/table.csv?s='
 	ID = symbol
