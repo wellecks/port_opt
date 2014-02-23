@@ -6,6 +6,9 @@
 
 import csv
 import urllib2
+from collections import defaultdict
+import numpy
+import scipy
 
 # Retrieves the stock quote for the given symbol
 # from Yahoo Finance as a float.
@@ -28,14 +31,51 @@ def get_stock_quote(symbol):
 #        outfile  - output filename, e.g. 'out.csv'
 #        interval - trading interval; either d, w, m (daily, weekly, monthl7)
 def csv_quote_history(symbol, start, end, outfile, interval='d'):
+	response = _quote_history(symbol, start, end, interval)
+	with open(outfile, 'wb') as f:
+		csv_reader = csv.reader(response)
+		csv_writer = csv.writer(f)
+		for row in csv_reader:
+			csv_writer.writerow(row)
+
+# Gives the stock history for the given symbol,
+# for the given date range, as a dictionary.
+# Output: keys: ['High', 'Adj Close', 'Volume', 'Low', 'Date', 'Close', 'Open']
+#         values: list
+def quote_history_dict(symbol, start, end, interval='m'):
+	history = defaultdict(lambda: [])
+	response = _quote_history(symbol, start, end, interval)
+	dreader = csv.DictReader(response)
+	for row in dreader:
+		for key in row.iterkeys():
+			history[key].insert(0, row[key])
+	return history
+
+def _quote_history(symbol, start, end, interval):
 	BASE_URL = 'http://ichart.yahoo.com/table.csv?s='
 	ID = symbol
 	sm, sd, sy = start.split('/')
 	em, ed, ey = end.split('/')
 	url = "%s%s&a=%d&b=%d&c=%d&d=%d&e=%d&f=%d&g=%s" % (BASE_URL, ID, (int(sm)-1), int(sd), int(sy), (int(em)-1), int(ed), int(ey), interval)
 	response = urllib2.urlopen(url)
-	with open(outfile, 'wb') as f:
-		csv_reader = csv.reader(response)
-		csv_writer = csv.writer(f)
-		for row in csv_reader:
-			csv_writer.writerow(row)
+	return response
+
+def get_prices(symbol, start, end, interval='m'):
+	history = quote_history_dict(symbol, start, end, interval)
+	prices = map(lambda x: float(x), history['Close'])
+	return prices
+
+def get_returns(symbol, start, end):
+	history = quote_history_dict(symbol, start, end, 'd')
+	prices = map(lambda x: float(x), history['Close'])
+	returns = map(lambda (x, y): (y/x)-1, zip(prices[0:-1], prices[1:]))
+	return returns
+
+def avg_monthly_return(symbol, start, end):
+	avg_return = numpy.mean(get_returns(symbol, start, end))
+	return avg_return
+
+def cov_matrix(symbols, start, end):
+	data = [numpy.array(get_returns(s, start, end)) for s in symbols]
+	x = numpy.array(data)
+	return numpy.cov(x)
