@@ -8,7 +8,6 @@ import csv
 import urllib2
 from collections import defaultdict
 import numpy
-import scipy
 
 # Retrieves the stock quote for the given symbol
 # from Yahoo Finance as a float.
@@ -65,17 +64,17 @@ def get_prices(symbol, start, end, interval='m'):
 	prices = map(lambda x: float(x), history['Close'])
 	return prices
 
-def get_returns(symbol, start, end):
-	history = quote_history_dict(symbol, start, end, 'd')
+def get_returns(symbol, start, end, interval='m'):
+	history = quote_history_dict(symbol, start, end, interval)
 	prices = map(lambda x: float(x), history['Close'])
 	returns = map(lambda (x, y): (y/x)-1, zip(prices[0:-1], prices[1:]))
 	return returns
 
-def avg_monthly_return(symbol, start, end):
-	avg_return = numpy.mean(get_returns(symbol, start, end))
+def avg_return(symbol, start, end, interval='m'):
+	avg_return = numpy.mean(get_returns(symbol, start, end, interval))
 	return avg_return
 
-def cov_matrix(symbols, start, end):
-	data = [numpy.array(get_returns(s, start, end)) for s in symbols]
+def cov_matrix(symbols, start, end, interval='m'):
+	data = [numpy.array(get_returns(s, start, end, interval)) for s in symbols]
 	x = numpy.array(data)
 	return numpy.cov(x)
