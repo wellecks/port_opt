@@ -5,8 +5,7 @@
 # satisfying a minimum expected return.
 # The problem is posed as a Quadratic Program, and solved
 # using the cvxopt library.
-# To estimate the mean return and covariance of stocks,
-# actual past data is obtained using the stocks module.
+# Uses actual past stock data, obtained using the stocks module.
 
 from cvxopt import matrix, solvers
 import stocks
