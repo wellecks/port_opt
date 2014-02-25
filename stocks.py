@@ -8,6 +8,7 @@ import csv
 import urllib2
 from collections import defaultdict
 import numpy
+from statsmodels.stats.correlation_tools import cov_nearest
 
 # Retrieves the stock quote for the given symbol
 # from Yahoo Finance as a float.
@@ -61,20 +62,35 @@ def _quote_history(symbol, start, end, interval):
 
 def get_prices(symbol, start, end, interval='m'):
 	history = quote_history_dict(symbol, start, end, interval)
-	prices = map(lambda x: float(x), history['Close'])
+	prices = map(lambda x: round(float(x),2), history['Close'])
+	prices[0] = round(float(history['Open'][0]),2)
 	return prices
 
 def get_returns(symbol, start, end, interval='m'):
 	history = quote_history_dict(symbol, start, end, interval)
-	prices = map(lambda x: float(x), history['Close'])
+	prices = map(lambda x: round(float(x),2), history['Close'])
+	prices[0] = round(float(history['Open'][0]),2)
 	returns = map(lambda (x, y): (y/x)-1, zip(prices[0:-1], prices[1:]))
 	return returns
 
+def get_yr_returns(symbol, start, end):
+	history = quote_history_dict(symbol, start, end, 'm')
+	prices = map(lambda x: round(float(x),2), history['Close'])
+	prices[0] = round(float(history['Open'][0]),2)
+	prices.insert(0, prices[0])
+	returns = map(lambda (x, y): (y/x)-1, zip(prices[0::12][:-1], prices[12::12]))
+	return returns
+
 def avg_return(symbol, start, end, interval='m'):
-	avg_return = numpy.mean(get_returns(symbol, start, end, interval))
-	return avg_return
+	if interval=='y':
+		return numpy.mean(get_yr_returns(symbol, start, end))
+	else:
+		return numpy.mean(get_returns(symbol, start, end, interval))
 
 def cov_matrix(symbols, start, end, interval='m'):
-	data = [numpy.array(get_returns(s, start, end, interval)) for s in symbols]
+	if interval=='y':
+		data = [numpy.array(get_yr_returns(s, start, end)) for s in symbols]
+	else:
+		data = [numpy.array(get_returns(s, start, end, interval)) for s in symbols]
 	x = numpy.array(data)
-	return numpy.cov(x)
+	return cov_nearest(numpy.cov(x))
